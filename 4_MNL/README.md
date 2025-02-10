@@ -25,7 +25,7 @@ The script outputs the model coefficients for each class in the multinomial logi
 ## **Usage**
 1. Place the input file **Cluster_result.csv** in the working directory.
 2. Run the script **Multinomial Logistic Regression.Rmd** in R or RStudio.
-3. Review the generated outputs in the working directory.
+3. Examine the outputs in the console to interpret the model performance and coefficients.
 
-## **Load and run the script**
+## **Load and Run the Script**
 source("Multinomial Logistic Regression.Rmd")
