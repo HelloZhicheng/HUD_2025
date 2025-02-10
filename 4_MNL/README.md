@@ -13,7 +13,7 @@ This folder contains an R script for performing **multinomial logistic regressio
 7. **Bootstrap Resampling**: Estimates coefficient uncertainty by resampling data 1,000 times and calculating standard errors and p-values for coefficients.  
 
 ## **Required Libraries**
-Install the following R libraries before running the script: install.packages(c("glmnet", "dplyr"))
+Install the following R libraries before running the script: `glmnet`, `dplyr`)
 
 ## **Input Data**
 1. **Target Variable**: A categorical variable representing classes (e.g., Cluster_result)
@@ -29,3 +29,6 @@ The script outputs the model coefficients for each class in the multinomial logi
 
 ## **Load and Run the Script**
 source("Multinomial Logistic Regression.Rmd")
+
+## **Contributors**
+If you have questions or suggestions for improving the code, feel free to open an issue or submit a pull request.
