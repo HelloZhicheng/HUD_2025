@@ -17,21 +17,21 @@ library(factoextra)   # Clustering visualization
 library(dendextend)   # For comparing dendrograms
 ```
 
-# Step 1: Load the data
+## Step 1: Load the data
 ```{r}
 rescaled_index_rank <- read_excel("Index.xlsx")
 ```
 
+## Step 2: Combine and scale the variables
 ```{r}
-# Step 2: Combine and scale the variables
 data <- cbind(vulnerability = rescaled_index_rank$vul_mean, 
               resilience = rescaled_index_rank$res_mean)
 
 data <- scale(data)  # Standardize variables
 ```
 
+## Step 3: Determine optimal number of clusters using the Elbow method
 ```{r}
-# Step 3: Determine optimal number of clusters using the Elbow method
 # Total within-cluster sum of squares
 wss <- (nrow(data) - 1) * sum(apply(data, 2, var))
 
@@ -43,13 +43,13 @@ plot(1:15, wss, type = "b", xlab = "Number of Clusters",
      ylab = "Within groups sum of squares") 
 ```
 
+## Step 4: K-Means Clustering
 ```{r}
-# Step 4: K-Means Clustering
 fit <- kmeans(data, centers = 3, iter.max = 100, nstart = 100)  # 3 clusters, 100 restarts
 ```
 
+## Step 5: Evaluate K-Means Clustering using average within-cluster standard deviation
 ```{r}
-# Step 5: Evaluate K-Means Clustering using average within-cluster standard deviation
 # Add cluster assignments to the data
 data_with_clusters <- as.data.frame(data)
 data_with_clusters$cluster <- as.factor(fit$cluster)
@@ -69,14 +69,14 @@ overall_avg_within_cluster_sd <- mean(avg_within_cluster_sd)
 print(paste("Average within-cluster standard deviation:", overall_avg_within_cluster_sd))
 ```
 
+## Step 6: Silhouette analysis for K-Means
 ```{r}
-# Step 6: Silhouette analysis for K-Means
 kmeans_sil <- silhouette(fit$cluster, dist(data))  # Compute silhouette coefficients
 fviz_silhouette(kmeans_sil, palette = "jco", ggtheme = theme_classic())
 ```
 
+## Step 7: Hierarchical Clustering
 ```{r}
-# Step 7: Hierarchical Clustering
 clusters_all <- hclust(dist(as.matrix(data), method = "euclidean"), method = "ward.D")  # Ward's method
 plot(clusters_all, cex = 0.6, hang = -1)
 rect.hclust(clusters_all, k = 3, border = 2:5)  # Highlight 3 clusters
@@ -90,8 +90,8 @@ h_sil <- hcut(as.matrix(data), k = 3, hc_func = "hclust", hc_method = "ward.D2",
 fviz_silhouette(h_sil, palette = "jco", ggtheme = theme_classic())
 ```
 
+## Step 8: Add metadata for city and save the results
 ```{r}
-# Step 8: Add metadata for city and save the results
 data_with_clusters$vulnerability <- rescaled_index_rank$vul_mean
 data_with_clusters$resilience <- rescaled_index_rank$res_mean
 data_with_clusters$City <- ifelse(rescaled_index_rank$state == 26, "Detroit", "Cincinnati")
@@ -100,8 +100,8 @@ data_with_clusters$City <- ifelse(rescaled_index_rank$state == 26, "Detroit", "C
 write.csv(data_with_clusters, "Cluster_result.csv", row.names = FALSE)
 ```
 
+## Step 9: Visualize clustering results
 ```{r}
-# Step 9: Visualize clustering results
 pdf("Cluster.pdf")  # Save plots to a PDF file
 
 # Plot for K-Means Clustering
@@ -123,8 +123,8 @@ ggplot(data_with_clusters, aes(
 dev.off()  # Close the PDF device
 ```
 
+## Step 10: Aggregated cluster means
 ```{r}
-# Step 10: Aggregated cluster means
 print("Cluster means (K-means):")
 aggregate(data_with_clusters[, 1:2], by = list(data_with_clusters$Kmeans), FUN = mean)
 
