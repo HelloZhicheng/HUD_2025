@@ -1,7 +1,7 @@
 # **Random Forest Models**
 
 ## **Overview**
-This folder contains code and resources for modeling **exposure**, **sensitivity**, **vulnerability**, **mitigation**, **preparedness**, **response**, **recovery**, **resilience** in areas characterized by HH (High Vulnerability and High Resilience) and HL (High Vulnerability and Low Resilience). The model uses a combination of feature selection techniques, Random Forest Regressors, and interpretability tools like SHAP to identify critical factors influencing exposure, sensitivity, vulnerability, mitigation, preparedness, response, recovery, and resilience.
+This folder contains code and resources for modeling **exposure**, **sensitivity**, **vulnerability**, **mitigation**, **preparedness**, **response**, **recovery**, **resilience** in areas characterized by **HH** (High Vulnerability and High Resilience) and **HL** (High Vulnerability and Low Resilience). The model uses a combination of feature selection techniques, Random Forest Regressors, and interpretability tools like SHAP to identify critical factors influencing exposure, sensitivity, vulnerability, mitigation, preparedness, response, recovery, and resilience.
 
 ## **Features of the Model**
 1. **Data Handling and Preprocessing**: Reads and processes data from a CSV file (e.g., `1_exposure_HH.csv`).
