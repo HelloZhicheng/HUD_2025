@@ -1,6 +1,7 @@
 ---
 title: "Multinomial Logistic regression (MLR)"
-Description: "This script performs multinomial logistic regression using the `glmnet` package, including data splitting, hyperparameter tuning, model evaluation, and bootstrap resampling for coefficient uncertainty estimation."
+Description: "This script performs multinomial logistic regression using the `glmnet` package, including data splitting, 
+hyperparameter tuning, model evaluation, and bootstrap resampling for coefficient uncertainty estimation."
 ---
 
 ```{r}
