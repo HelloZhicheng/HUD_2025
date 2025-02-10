@@ -5,6 +5,8 @@ Input: "Index.xlsx` (data with vulnerability and resilience indices)"
 Output: "Cluster assignments, visualizations, and a PDF file of clustering results."
 ---
 
+## Load required libraries
+
 ```{r}
 # Load required libraries
 library(readxl)       # For reading Excel files
