@@ -11,7 +11,7 @@ Removes unnecessary columns to prepare the dataset for training and testing.
 4. **Model Evaluation Metrics**: Cross-validated R² scores (`R2_CV`); Out-of-bag R² scores (`R2_oob`); Root Mean Squared Error (RMSE); Mean Absolute Error (MAE); Standard R² scores.
 
 ## **Required Libraries**
-Install the following R libraries before running the script: `numpy`, `pandas`, `matplotlib"` `seaborn`, `statsmodels`, `sklearn`, `eli5`, `shap`
+Install the following R libraries before running the script: `numpy`, `pandas`, `matplotlib"` `seaborn`, `statsmodels`, `sklearn`, `eli5`, `shap`.
 
 ## **Usage**
 1. **Dataset**: Ensure the input dataset (e.g., 1_exposure_HH.csv) is present in the same directory. The dataset should contain target variable and predictor variables.
