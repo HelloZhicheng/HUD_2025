@@ -6,9 +6,7 @@ Output: "Cluster assignments, visualizations, and a PDF file of clustering resul
 ---
 
 ## Load required libraries
-
 ```{r}
-# Load required libraries
 library(readxl)       # For reading Excel files
 library(moments)      # For statistical moments
 library(scales)       # For scaling data
@@ -19,8 +17,8 @@ library(factoextra)   # Clustering visualization
 library(dendextend)   # For comparing dendrograms
 ```
 
-```{r}
 # Step 1: Load the data
+```{r}
 rescaled_index_rank <- read_excel("Index.xlsx")
 ```
 
