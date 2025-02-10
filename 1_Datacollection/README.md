@@ -10,7 +10,7 @@ This folder retrieves and processes **social**, **economic**, and **health** dat
 4. Processes and saves data as year-specific CSV files.
 
 ## **Required Libraries**
-Install the following python packages before running the script: `requests`, `pandas`
+Install the following python packages before running the script: `requests`, `pandas`.
 
 ## **Input Data**
 1. **Census Bureau API**: Data retrieved using API calls with specific variable codes.
