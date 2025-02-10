@@ -13,7 +13,7 @@ This folder contains an R script for performing **multinomial logistic regressio
 7. **Bootstrap Resampling**: Estimates coefficient uncertainty by resampling data 1,000 times and calculating standard errors and p-values for coefficients.  
 
 ## **Required Libraries**
-Install the following R libraries before running the script: `glmnet`, `dplyr`)
+Install the following R libraries before running the script: `glmnet`, `dplyr`.
 
 ## **Input Data**
 1. **Target Variable**: A categorical variable representing classes (e.g., Cluster_result)
