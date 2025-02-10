@@ -37,5 +37,5 @@ The script uses a file named **Index.xlsx** as input. This file must contain the
 3. Review the generated outputs in the working directory.
 
 ## **Load and run the script**
-source("Clustering Analysis.R")
+source("Clustering Analysis.Rmd")
 
