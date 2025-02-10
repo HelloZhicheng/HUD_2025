@@ -21,7 +21,7 @@ Yearly combined datasets from 2010 to 2020. Each file contains merged data from 
 
 ## **Usage**
 1. Place the script and **censustract_summary.xlsx** in the same directory.
-2. Run the script in `Social_variable.ipynb`, `Economic_variable.ipynb`, and `Health_variable.ipynb`.
+2. Run the script in **Social_variable.ipynb**, **Economic_variable.ipynb**, and **Health_variable.ipynb**.
 
 ## **Customization**
 1. **API Variables**: Adjust variables in the `url_part1` and `url_part2` strings to include additional or alternative census variables.
