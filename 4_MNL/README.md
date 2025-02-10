@@ -16,7 +16,7 @@ This folder contains an R script for performing **multinomial logistic regressio
 Install the following R libraries before running the script: install.packages(c("glmnet", "dplyr"))
 
 ## **Input Data**
-1. **Target Variable**: A categorical variable representing classes (e.g., cluster_result)
+1. **Target Variable**: A categorical variable representing classes (e.g., Cluster_result)
 2. **Predictor Variables**: Numeric columns representing predictors. The script uses the following predictors: exp_mean, sen_mean, m_mean, pre_mean, rec_mean, res_mean
 
 ## **Outputs**
