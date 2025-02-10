@@ -1,0 +1,133 @@
+---
+title: "Clustering Analysis: K-Means and Hierarchical"
+Description: "This script performs clustering analysis using K-means and hierarchical clustering. It evaluates clustering performance using silhouette coefficients and visualizes the results for multiple clustering methods."
+Input: "rescaled_index_0610.xlsx` (data with vulnerability and resilience indices)"
+Output: "Cluster assignments, visualizations, and a PDF file of clustering results."
+---
+
+```{r}
+# Load required libraries
+library(readxl)       # For reading Excel files
+library(moments)      # For statistical moments
+library(scales)       # For scaling data
+library(ggplot2)      # For plotting
+library(tidyverse)    # Data manipulation and visualization
+library(cluster)      # Clustering algorithms
+library(factoextra)   # Clustering visualization
+library(dendextend)   # For comparing dendrograms
+```
+
+```{r}
+# Step 1: Load the data
+rescaled_index_rank <- read_excel("rescaled_index_0610.xlsx")
+```
+
+```{r}
+# Step 2: Combine and scale the variables
+data <- cbind(vulnerability = rescaled_index_rank$vul_mean, 
+              resilience = rescaled_index_rank$res_mean)
+
+data <- scale(data)  # Standardize variables
+```
+
+```{r}
+# Step 3: Determine optimal number of clusters using the Elbow method
+# Total within-cluster sum of squares
+wss <- (nrow(data) - 1) * sum(apply(data, 2, var))
+
+# Elbow plot
+for (i in 2:15) {
+  wss[i] <- sum(kmeans(data, centers = i)$withinss)
+}
+plot(1:15, wss, type = "b", xlab = "Number of Clusters", 
+     ylab = "Within groups sum of squares") 
+```
+
+```{r}
+# Step 4: K-Means Clustering
+fit <- kmeans(data, centers = 3, iter.max = 100, nstart = 100)  # 3 clusters, 100 restarts
+```
+
+```{r}
+# Step 5: Evaluate K-Means Clustering using average within-cluster standard deviation
+# Add cluster assignments to the data
+data_with_clusters <- as.data.frame(data)
+data_with_clusters$cluster <- as.factor(fit$cluster)
+
+# Calculate the standard deviation within each cluster
+cluster_sd <- data_with_clusters %>%
+  group_by(cluster) %>%
+  summarise_all(sd)
+
+# Calculate average standard deviation within clusters
+avg_within_cluster_sd <- cluster_sd %>%
+  select(-cluster) %>%
+  rowMeans()
+
+# Compute the overall average within-cluster standard deviation
+overall_avg_within_cluster_sd <- mean(avg_within_cluster_sd)
+print(paste("Average within-cluster standard deviation:", overall_avg_within_cluster_sd))
+```
+
+```{r}
+# Step 6: Silhouette analysis for K-Means
+kmeans_sil <- silhouette(fit$cluster, dist(data))  # Compute silhouette coefficients
+fviz_silhouette(kmeans_sil, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r}
+# Step 7: Hierarchical Clustering
+clusters_all <- hclust(dist(as.matrix(data), method = "euclidean"), method = "ward.D")  # Ward's method
+plot(clusters_all, cex = 0.6, hang = -1)
+rect.hclust(clusters_all, k = 3, border = 2:5)  # Highlight 3 clusters
+
+# Cut tree into 3 clusters
+g <- cutree(clusters_all, k = 3)
+data_with_clusters$Hierarchical <- g
+
+# Hierarchical clustering silhouette analysis
+h_sil <- hcut(as.matrix(data), k = 3, hc_func = "hclust", hc_method = "ward.D2", hc_metric = "euclidean")
+fviz_silhouette(h_sil, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r}
+# Step 8: Add metadata for city and save the results
+data_with_clusters$vulnerability <- rescaled_index_rank$vul_mean
+data_with_clusters$resilience <- rescaled_index_rank$res_mean
+data_with_clusters$City <- ifelse(rescaled_index_rank$state == 26, "Detroit", "Cincinnati")
+
+# Save results to CSV
+write.csv(data_with_clusters, "cluster_weighted_0617_3cluster_mean.csv", row.names = FALSE)
+```
+
+```{r}
+# Step 9: Visualize clustering results
+pdf("Cluster.pdf")  # Save plots to a PDF file
+
+# Plot for K-Means Clustering
+ggplot(data_with_clusters, aes(
+  x = vulnerability, y = resilience, 
+  color = factor(fit$cluster), shape = City)) +
+  geom_point() +
+  labs(color = "K-means Cluster") +
+  theme_minimal()
+
+# Plot for Hierarchical Clustering
+ggplot(data_with_clusters, aes(
+  x = vulnerability, y = resilience, 
+  color = factor(Hierarchical), shape = City)) +
+  geom_point() +
+  labs(color = "Hierarchical Cluster") +
+  theme_minimal()
+
+dev.off()  # Close the PDF device
+```
+
+```{r}
+# Step 10: Aggregated cluster means
+print("Cluster means (K-means):")
+aggregate(data_with_clusters[, 1:2], by = list(data_with_clusters$Kmeans), FUN = mean)
+
+print("Cluster means (Hierarchical):")
+aggregate(data_with_clusters[, 1:2], by = list(data_with_clusters$Hierarchical), FUN = mean)
+```
