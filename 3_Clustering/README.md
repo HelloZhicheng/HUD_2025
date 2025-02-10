@@ -1,7 +1,5 @@
 # **Clustering Analysis: Vulnerability and Resilience**
 
----
-
 ## **Overview**
 This folder contains an R script for performing clustering analysis on data related to vulnerability and resilience indices. The analysis uses **K-means**, and **hierarchical clustering**. The script evaluates clustering performance and visualizes the results with several techniques, including the elbow method and silhouette analysis.
 
