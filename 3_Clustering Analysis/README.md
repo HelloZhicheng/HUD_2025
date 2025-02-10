@@ -33,7 +33,7 @@ The script uses a file named **Index.xlsx** as input. This file must contain the
 
 ## **Usage**
 1. Place the input file **Index.xlsx** in the working directory.
-2. Run the script **Clustering Analysis.R** in R or RStudio.
+2. Run the script **Clustering Analysis.Rmd** in R or RStudio.
 3. Review the generated outputs in the working directory.
 
 ## **Load and run the script**
