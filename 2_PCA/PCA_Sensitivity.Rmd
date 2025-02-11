@@ -1,0 +1,174 @@
+---
+title: "PCA Sensitivity Analysis"
+---
+
+## Load Required Libraries
+
+```{r}
+library(readxl)       
+library(tidyverse)    
+library(devtools)     
+library(ggbiplot)     
+library(factoextra)   
+library(FactorAssumptions) 
+library(EFAtools)     
+library(knitr)        
+library(pracma)       
+library(corrplot) 
+```
+
+## Import Data from Excel Sheets
+
+```{r}
+path <- "Final_Sensitivity.xlsx"
+
+# Function to read multiple sheets from an Excel file
+multiplesheets <- function(fname) {
+  sheets <- readxl::excel_sheets(fname)
+  data_list <- lapply(sheets, function(x) readxl::read_excel(fname, sheet = x))
+  data_frame <- lapply(data_list, as.data.frame)
+  names(data_frame) <- sheets
+  return(data_frame)
+}
+
+# Load the data from all sheets
+raw_data <- multiplesheets(path)
+```
+
+## Preprocess Data
+
+```{r}
+# Remove outliers highlighted in yellow (rows 263 to 268)
+Social <- raw_data$Social_variable[-c(263:268), ]
+Eco <- raw_data$Economic_variable[-c(263:268), ]
+Env <- raw_data$Environmental_variable[-c(263:268), ]
+Infra <- raw_data$Infrastructure_variable[-c(263:268), ]
+Health <- raw_data$Health_variable[-c(263:268), ]
+Plan <- raw_data$Plan_variable[-c(263:268), ]
+
+# Transform specific variables to negative (for standardization purposes)
+Social$EnglishR <- -Social$EnglishR
+Social$citizenR <- -Social$citizenR
+Env[,c(7,9,11:13)] <- -Env[,c(7,9,11:13)]
+Eco[,c(8:10,16:19)] <- -Eco[,c(8:10,16:19)]
+Infra[,c(9,13:19)] <- -Infra[,c(9,13:19)]
+Health[,c(6,7)] <- -Health[,c(6,7)]
+```
+
+## Perform PCA Analysis
+
+```{r}
+# Combine all relevant variables into one dataset (excluding metadata columns)
+all_data <- cbind(Social[,-c(1:5,15)],Env[,-c(1:5)],Eco[,-c(1:5)],Infra[,-c(1:5)],Health[,-c(1:5)])
+
+# Perform KMO (Kaiser-Meyer-Olkin) test to check sampling adequacy
+kmo_result <- kmo_optimal_solution(all_data, squared = FALSE)
+kmo_result$removed   # Variables removed due to low KMO values
+
+# Perform Bartlett's test of sphericity
+bartlett_result <- BARTLETT(all_data)
+print(bartlett_result)
+
+# Update the dataset based on KMO results
+all_data <- kmo_result$df
+
+# Perform PCA
+pca_result <- prcomp(all_data, center = TRUE, scale. = TRUE)
+
+# Scree plot to visualize explained variance
+fviz_screeplot(pca_result, addlabels = TRUE, ylim = c(0, 50), max.overlaps = 10)
+
+# PCA variable contributions
+fviz_pca_var(pca_result, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE, max.overlaps = 10)
+
+# Top contributors to the first two principal components
+fviz_contrib(pca_result, choice = "var", axes = 1, top = 10)
+fviz_contrib(pca_result, choice = "var", axes = 2, top = 10)
+
+# Visualize individual observations
+fviz_pca_ind(pca_result, geom.ind = "point")
+
+# Extract eigenvector matrix (loadings)
+loadings <- pca_result$rotation[, 1:15]
+
+# Identify most important variables for PC1 and PC2
+selected_variables <- loadings[c(which.max(loadings[, "PC1"]),
+                                  which.min(loadings[, "PC1"]),
+                                  which.max(loadings[, "PC2"]),
+                                  which.min(loadings[, "PC2"])), c("PC1", "PC2")]
+selected_variables <- as.data.frame(selected_variables) %>%
+  rownames_to_column(var = "variables")
+
+# Summarize PCA results
+pca_summary <- summary(pca_result)
+
+# Calculate eigenvalues and variance explained
+variance_exp <- pca_result$sdev^2 %>% as.data.frame() %>%
+  rownames_to_column("component") %>%
+  bind_cols(variance = round(sqrt(pca_result$sdev^2), 3),
+            proportion_variance = round(pca_result$sdev^2 / sum(pca_result$sdev^2), 3),
+            cumulative_proportion = round(cumsum(pca_result$sdev^2) / sum(pca_result$sdev^2), 3)) %>%
+  dplyr::select(component, variance, proportion_variance, cumulative_proportion)
+```
+
+## Compute Index Scores
+
+```{r}
+# Standardize data (z-scores)
+all_data_z <- scale(all_data, center = TRUE, scale = TRUE)
+
+# Calculate unweighted index
+unweighted_scores <- apply(as.matrix(all_data_z) %*% as.matrix(loadings), 1, mean)
+unweighted_rank <- rank(-unweighted_scores)
+unweighted_result <- data.frame(score = unweighted_scores, rank = unweighted_rank)
+
+# Calculate weighted index
+weighted_scores <- as.matrix(all_data_z) %*% as.matrix(loadings) %*% variance_exp$proportion_variance[1:15]
+weighted_rank <- rank(-weighted_scores)
+weighted_result <- data.frame(score = weighted_scores, rank = weighted_rank)
+
+# Compare ranks
+correlation <- cor(weighted_result$rank, unweighted_result$rank)
+print(correlation)
+```
+
+## Rotated Component Matrix
+
+```{r}
+# Perform varimax rotation on loadings
+raw_loadings <- loadings %*% diag(pca_result$sdev, 15, 15)
+rotated_loadings <- varimax(raw_loadings)$loadings
+
+# Extract rotated component summaries
+vx <- colSums(rotated_loadings^2)
+table_summary <- rbind(`SS loadings` = vx,
+                       `Proportion Var` = vx / nrow(rotated_loadings),
+                       `Cumulative Var` = cumsum(vx / nrow(rotated_loadings)))
+
+# Recalculate scores using rotated loadings
+rotated_inv_loadings <- t(pracma::pinv(rotated_loadings))
+rotated_scores <- all_data_z %*% rotated_inv_loadings
+
+# Calculate unweighted index with rotated loadings
+unweighted_crm <- apply(rotated_scores, 1, mean)
+unweighted_rank_crm <- rank(-unweighted_crm)
+unweighted_crm_result <- data.frame(score = unweighted_crm, rank = unweighted_rank_crm)
+
+# Calculate weighted index with rotated loadings
+weighted_crm <- rotated_scores %*% as.vector(table_summary[2, ])
+weighted_rank_crm <- rank(-weighted_crm)
+weighted_crm_result <- data.frame(score = weighted_crm, rank = weighted_rank_crm)
+
+# Correlation matrix visualization
+cor_matrix <- cor(all_data)
+corrplot(cor_matrix, method = "ellipse")
+```
+
+## Export Results
+
+```{r}
+# Export results
+write.csv(data.frame(score = unweighted_scores, rank = unweighted_rank), "Sensitivity.csv")
+write.csv(data.frame(score = weighted_crm, rank = weighted_rank_crm), "Sensitivity_crm.csv")
+```

@@ -1,0 +1,157 @@
+---
+title: "PCA Adaptivity Recovery Analysis"
+---
+
+## Load Required Libraries
+
+```{r}
+library(readxl)        
+library(tidyverse)     
+library(devtools)      
+library(pacman)        
+library(factoextra)    
+library(pracma)        
+library(FactorAssumptions) 
+library(EFAtools)      
+library(knitr)         
+library(corrplot)      
+```
+
+## Import Data from Excel Sheets
+
+```{r}
+path <- "Final_Recovery.xlsx"
+
+# Function to read all sheets from an Excel file and convert them into a list of data frames
+multiplesheets <- function(fname) {
+  sheets <- readxl::excel_sheets(fname)  # Get sheet names
+  tibble <- lapply(sheets, function(x) readxl::read_excel(fname, sheet = x))
+  data_frame <- lapply(tibble, as.data.frame)
+  names(data_frame) <- sheets  # Assign names to data frames
+  return(data_frame)
+}
+
+# Load data
+raw_data <- multiplesheets(path)
+```
+
+## Preprocess Data
+
+```{r}
+# Subset and remove unwanted rows from data frames
+Infra <- raw_data$Infrastructure_variable[-c(263:268), ]
+Social <- raw_data$Social_variable[-c(263:268), ]
+Eco <- raw_data$Economic_variable[-c(263:268), ]
+Env <- raw_data$Environmental_variable[-c(263:268), ]
+Plan <- raw_data$Plan_variable[-c(263:268), ]
+Health <- raw_data$Health_variable[-c(263:268), ]
+
+# Adjust variable directions to align with analysis assumptions
+Social$eduR <- -Social$eduR
+Eco[,c(7,10,13)]<- -Eco[,c(7,10,13)]
+Health[,c(9,10)]<- -Health[,c(9,10)]
+```
+
+## Perform PCA Analysis
+
+```{r}
+# Combine All Variables
+all_data <- cbind(Social[,-c(1:5)],Health[,-c(1:5)],Eco[,-c(1:5)],Infra[,-c(1:5)])
+
+# KMO Test
+kmo_result <- kmo_optimal_solution(all_data, squared = FALSE)
+kmo_result$removed  # Variables removed based on KMO
+
+# Bartlett Test
+bartlett_result <- BARTLETT(all_data)
+print(bartlett_result)
+
+# Retain the optimized dataset
+all_data <- kmo_result$df
+
+# Perform PCA
+pca_all <- prcomp(all_data, center = TRUE, scale. = TRUE)
+
+# Scree Plot
+fviz_screeplot(pca_all, addlabels = TRUE, ylim = c(0, 50), max.overlaps = 10)
+
+# Variable Contributions to PCA
+fviz_pca_var(pca_all, col.var = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE, max.overlaps = 10)
+
+# Top 10 Contributing Variables
+fviz_contrib(pca_all, choice = "var", axes = 1, top = 10)
+fviz_contrib(pca_all, choice = "var", axes = 2, top = 10)
+
+# PCA Summary and Eigenvalues
+pca_summary <- summary(pca_all)
+eigen_values <- pca_all$sdev^2
+
+# Variance Explanation
+variance_exp <- data.frame(
+  component = seq_along(eigen_values),
+  variance = round(sqrt(eigen_values), 3),
+  proportion_variance = round(eigen_values / sum(eigen_values), 3),
+  cumulative_proportion = round(cumsum(eigen_values) / sum(eigen_values), 3)
+)
+variance_exp
+```
+
+## Rotated Component Matrix
+
+```{r}
+# Compute Rotated Loadings
+raw_loadings <- pca_all$rotation[, 1:7] %*% diag(pca_all$sdev, 7, 7)
+rotated_loadings <- varimax(raw_loadings)$loadings
+rotated_loadings
+
+# Summarize Rotated Loadings
+loading_summary <- rbind(
+  `SS loadings` = colSums(rotated_loadings^2),
+  `Proportion Var` = colSums(rotated_loadings^2) / nrow(rotated_loadings),
+  `Cumulative Var` = cumsum(colSums(rotated_loadings^2) / nrow(rotated_loadings))
+)
+loading_summary
+```
+
+## Compute Index Scores
+
+```{r}
+# Standardize Data
+scaled_data <- scale(all_data, center = TRUE, scale = TRUE)
+
+# Calculate Unweighted Scores
+unweighted_scores <- as.matrix(scaled_data) %*% pca_all$rotation[, 1:7]
+unweighted_index <- rowMeans(unweighted_scores)
+rank_unweighted <- rank(-unweighted_index)
+unweighted_result <- data.frame(score = unweighted_index, rank = rank_unweighted)
+range(unweighted_result$score)
+
+# Calculate Weighted Scores
+weighted_scores <- unweighted_scores %*% variance_exp$proportion_variance[1:7]
+rank_weighted <- rank(-weighted_scores)
+weighted_result <- data.frame(score = weighted_scores, rank = rank_weighted)
+range(weighted_result$score)
+
+# Correlation Between Ranks
+cor(weighted_result$rank, unweighted_result$rank)
+```
+
+## Export Results
+
+```{r}
+# Combine Results
+index_result <- data.frame(
+  unweighted_score = unweighted_result$score,
+  unweighted_rank = unweighted_result$rank,
+  weighted_score = weighted_result$score,
+  weighted_rank = weighted_result$rank
+)
+
+write.csv(index_result, "Recovery_index.csv")
+
+# Correlation Matrix Visualization
+cor_matrix <- cor(all_data)
+corrplot(cor_matrix, method = "ellipse")
+```
