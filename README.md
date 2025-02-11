@@ -36,6 +36,4 @@ Random Forest models are used to identify the most critical indicators for each 
 4. **Multinomial Logistic Regression** ➔ Analyze subindex influences on classifications.
 5. **Random Forest Analysis** ➔ Identify critical indicators influencing subindexes.
 
----
-
 This workflow provides a comprehensive approach to understanding and interpreting vulnerability and resilience across multiple dimensions.
